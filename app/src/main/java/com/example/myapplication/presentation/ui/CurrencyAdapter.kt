@@ -61,8 +61,27 @@ class CurrencyAdapter(
             if (item.input_price.hashCode() in textWatchers.keys) {
                 item.input_price.removeTextChangedListener(textWatchers[item.input_price.hashCode()])
             }
+
+            if (item.textView_code.text != currency.currency) {
+                try {
+                    Glide.with(context)
+                        .load(
+                            context.resources.getIdentifier(
+                                "flag_${currency.currency.toLowerCase()}",
+                                "drawable",
+                                context.packageName
+                            )
+                        )
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(item.imageView)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
             item.textView_code.text = currency.currency
-            item.textView_currency.text = context.resources.getString(processCurrency(currency.currency))
+            item.textView_currency.text =
+                context.resources.getString(processCurrency(currency.currency))
             item.input_price.setText(String.format("%.0f", currency.price).trim())
             if (currency.base) {
                 item.setOnClickListener { }
@@ -70,13 +89,27 @@ class CurrencyAdapter(
                     override fun afterTextChanged(s: Editable?) {
                     }
 
-                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                    override fun beforeTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int
+                    ) {
                     }
 
-                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    override fun onTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) {
                         Timber.i("Text changed $s")
                         rates?.also {
-                            update.invoke(it[0].currency, s.toString().toFloat())
+                            s?.also { num ->
+                                if (num.matches("-?\\d+(\\.\\d+)?".toRegex())) {
+                                    update.invoke(it[0].currency, num.toString().toFloat())
+                                }
+                            }
                         }
                     }
                 }
@@ -98,20 +131,6 @@ class CurrencyAdapter(
                 }
             }
 
-            try {
-                Glide.with(context)
-                    .load(
-                        context.resources.getIdentifier(
-                            "flag_${currency.currency.toLowerCase()}",
-                            "drawable",
-                            context.packageName
-                        )
-                    )
-                    .apply(RequestOptions.circleCropTransform())
-                    .into(item.imageView)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
         }
 
         private fun processCurrency(currency: String): Int {
